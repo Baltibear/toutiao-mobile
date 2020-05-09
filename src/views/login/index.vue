@@ -10,13 +10,15 @@
 <van-cell-group>
   <van-field
     v-model="user.mobile"
-    left-icon="iconshouji"
+    icon-prefix="icon"
+    left-icon="shouji"
     placeholder="请输入手机号"
   />
   <van-field
     v-model="user.code"
     clearable
-    left-icon="iconyanzhengma"
+    icon-prefix="icon"
+    left-icon="yanzhengma"
     placeholder="请输入验证码"
 >
  <template #button>
