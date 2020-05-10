@@ -7,12 +7,14 @@
   @click-left="$router.back()"
 />
 
-<van-form @submit="onLogin">
+<van-form @submit="onLogin" :show-error="false" :show-error-message="false" validate-first @failed="onFailed" ref="login-form">
   <van-field
     v-model="user.mobile"
     icon-prefix="icon"
     left-icon="shouji"
+    center
     placeholder="请输入手机号"
+    name="mobile"
     :rules="formRules.mobile"
   />
   <van-field
@@ -20,11 +22,14 @@
     clearable
     icon-prefix="icon"
     left-icon="yanzhengma"
+    center
     placeholder="请输入验证码"
+    name="code"
     :rules="formRules.code"
 >
  <template #button>
-    <van-button class="send-btn" size="small" round>发送验证码</van-button>
+    <van-count-down v-if="isCountDownShow" :time="1000 * 60" format="ss s" @finish="isCountDownShow = false" />
+    <van-button v-else class="send-btn" size="small" round @click.prevent="onSendSms" :loading="isSendSmsLoading" >发送验证码</van-button>
   </template>
 </van-field>
 <div class="login-btn-wrap">
@@ -35,7 +40,7 @@
 </template>
 
 <script>
-import { login } from '@/api/user'
+import { login, sendSms } from '@/api/user'
 import { Toast } from 'vant'
 
 export default {
@@ -57,7 +62,9 @@ export default {
           { required: true, message: '请填写验证码' },
           { pattern: /^\d{6}$/, message: '验证码错误' }
         ]
-      }
+      },
+      isCountDownShow: false,
+      isSendSmsLoading: false
     }
   },
   computed: {},
@@ -79,6 +86,38 @@ export default {
         console.log(err)
         Toast.fail('登陆失败，手机号或验证码错误')
       }
+    },
+
+    onFailed (error) {
+      if (error.errors[0]) {
+        this.$toast({
+          message: error.errors[0].message,
+          position: 'top'
+        })
+      }
+    },
+
+    async onSendSms () {
+      try {
+        await this.$refs['login-form'].validate('mobile')
+        this.isSendSmsLoading = true
+        await sendSms(this.user.mobile)
+        this.isCountDownShow = true
+      } catch (err) {
+        let message = ''
+        if (err && err.response && err.response.status === 429) {
+          message = '发送太频繁，请稍后重试'
+        } else if (err.name === 'mobile') {
+          message = err.message
+        } else {
+          message = '发送失败'
+        }
+        this.$toast({
+          message,
+          position: 'top'
+        })
+      }
+      this.isSendSmsLoading = false
     }
   }
 }
