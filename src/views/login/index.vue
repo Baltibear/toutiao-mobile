@@ -79,9 +79,9 @@ export default {
         duration: 0
       })
       try {
-        const res = await login(this.user)
-        console.log(res)
+        const { data } = await login(this.user)
         Toast.success('登录成功')
+        this.$store.commit('setUser', data.data)
       } catch (err) {
         console.log(err)
         Toast.fail('登陆失败，手机号或验证码错误')
